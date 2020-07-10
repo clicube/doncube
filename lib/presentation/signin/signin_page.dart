@@ -8,9 +8,8 @@ class SignInPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Provider(
-      create: (context) =>
-          _TextEditingControllerWrapper(TextEditingController()),
+    return ChangeNotifierProvider(
+      create: (context) => TextEditingController(),
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Sign in to instance'),
@@ -18,8 +17,8 @@ class SignInPage extends StatelessWidget {
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: Consumer<_TextEditingControllerWrapper>(
-              builder: (context, wrapper, child) => Column(
+            child: Consumer<TextEditingController>(
+              builder: (context, controller, child) => Column(
                 mainAxisSize: MainAxisSize.max,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -27,14 +26,16 @@ class SignInPage extends StatelessWidget {
                     decoration: const InputDecoration(labelText: 'Instance'),
                     autofocus: true,
                     autocorrect: false,
-                    controller: wrapper.controller,
+                    controller: controller,
                   ),
                   const SizedBox(height: 64),
                   FlatButton(
-                    onPressed: () {
-                      final text = wrapper.controller.value.text;
-                      _startAuthentication(context, text);
-                    },
+                    onPressed: controller.text.isNotEmpty
+                        ? () {
+                            final text = controller.value.text;
+                            _startAuthentication(context, text);
+                          }
+                        : null,
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: const [
@@ -65,9 +66,4 @@ class SignInPage extends StatelessWidget {
       (route) => false,
     );
   }
-}
-
-class _TextEditingControllerWrapper {
-  const _TextEditingControllerWrapper(this.controller);
-  final TextEditingController controller;
 }
