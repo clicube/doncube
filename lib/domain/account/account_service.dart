@@ -55,8 +55,7 @@ class AccountService {
       'code': resultUri.queryParameters['code'],
     });
 
-    print('token response: ${response.statusCode}');
-    print('              : ${response.body}');
+    print('token response: ${response.body}');
     final accessToken = jsonDecode(response.body)['access_token'] as String;
 
     print('accessToken: $accessToken');
@@ -75,14 +74,14 @@ class AccountService {
 
   bool isStoredAnyAccount() => accountStore.getAll().isNotEmpty;
 
-  Future<void> signOut(Account account) {
+  Future<void> signOut(Account account) async {
     // TODO(clicube): should revoke token
-    accountStore.remove(account);
+    await accountStore.remove(account);
   }
 
   Future<OAuthApp> _registerOAuthApp(mstdn.Mastodon mastodon,
       String instanceHostName, String redirectUri) async {
-    print('register new OAuth application');
+    print('attempt to register new OAuth application');
     final credentials = await mastodon.appCredentials(
         Uri.parse('https://doncube.cubik.jp'), redirectUri, 'Doncube');
     final oAuthApp = OAuthApp(
