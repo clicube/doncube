@@ -1,6 +1,6 @@
-import 'package:doncube/data/account/account.dart';
-import 'package:doncube/domain/account/account_service.dart';
-import 'package:doncube/presentation/main/account_context.dart';
+import 'package:doncube/data/session/session.dart';
+import 'package:doncube/domain/session/session_service.dart';
+import 'package:doncube/presentation/main/session_context.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -64,10 +64,10 @@ class SignInPage extends StatelessWidget {
   Future<void> _startAuthentication(
       BuildContext context, String hostname, _SignInState _signInState) async {
     _signInState.value = true;
-    final accountService = context.read<AccountService>();
-    Account account;
+    final sessionService = context.read<SessionService>();
+    Session session;
     try {
-      account = await accountService.signIn(hostname);
+      session = await sessionService.signIn(hostname);
     } on Exception catch (e) {
       print(e.toString());
       Scaffold.of(context).showSnackBar(const SnackBar(
@@ -79,7 +79,7 @@ class SignInPage extends StatelessWidget {
     }
 
     final nextRoute = MaterialPageRoute<Object>(
-        builder: (context) => AccountContext.mainPage(account));
+        builder: (context) => SessionContext.mainPage(session));
     await Navigator.of(context, rootNavigator: true).pushAndRemoveUntil<Object>(
       nextRoute,
       (route) => false,

@@ -1,6 +1,5 @@
-import 'package:doncube/data/account/account.dart';
-import 'package:doncube/domain/account/account_service.dart';
-import 'package:doncube/presentation/signin/signin_page.dart';
+import 'package:doncube/data/session/session.dart';
+import 'package:doncube/domain/session/session_service.dart';
 import 'package:doncube/presentation/welcome/welcome_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -10,20 +9,18 @@ class MainPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final token = context.watch<Account>().token;
+    final token = context.watch<Session>().token;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Main Page'),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+      body: Container(),
+      drawer: Drawer(
+        child: ListView(
           children: [
-            Text('Access token: $token'),
-            const SizedBox(height: 48),
-            RaisedButton(
-              onPressed: () => _signOut(context),
-              child: Text('Sign out'),
+            ListTile(
+              title: const Text('Sign out'),
+              onTap: () => _signOut(context),
             ),
           ],
         ),
@@ -32,8 +29,8 @@ class MainPage extends StatelessWidget {
   }
 
   Future<void> _signOut(BuildContext context) async {
-    final account = context.read<Account>();
-    await context.read<AccountService>().signOut(account);
+    final session = context.read<Session>();
+    await context.read<SessionService>().signOut(session);
     final nextRoute =
         MaterialPageRoute<Object>(builder: (context) => const WelcomePage());
     await Navigator.of(context, rootNavigator: true)
