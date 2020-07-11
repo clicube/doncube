@@ -7,7 +7,9 @@ class Session {
     @required this.uuid,
     @required this.instanceHostName,
     @required this.token,
-  }) : mastodon = _createMastodon(instanceHostName);
+  }) : mastodon = _createMastodon(instanceHostName) {
+    mastodon.token = token;
+  }
 
   factory Session.create({
     @required String instanceHostName,
