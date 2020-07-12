@@ -47,6 +47,8 @@ class _StatusContent extends StatelessWidget {
     return RichText(
       text: MastodonTextSpan(
         text: status.content,
+        emojis: status.emojis,
+        emojiSize: 16,
         style: DefaultTextStyle.of(context).style,
         onTapLink: (url) {
           FlutterWebBrowser.openWebPage(url: url);
