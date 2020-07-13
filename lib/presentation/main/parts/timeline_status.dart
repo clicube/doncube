@@ -1,6 +1,7 @@
 import 'package:doncube/presentation/main/parts/mastodon_textspan.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_web_browser/flutter_web_browser.dart';
+import 'package:timeago/timeago.dart' as timeago;
 import 'package:mastodon_dart/mastodon_dart.dart';
 
 class StatusWidget extends StatelessWidget {
@@ -80,7 +81,7 @@ class _StatusHeader extends StatelessWidget {
           child: Align(
             alignment: Alignment.centerRight,
             child: Text(
-              '24s',
+              timeago.format(status.createdAt),
               style: baseTextStyle,
             ),
           ),
