@@ -11,7 +11,7 @@ class StatusWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.only(top: 8, right: 8, left: 8, bottom: 0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -44,7 +44,8 @@ class StatusWidget extends StatelessWidget {
                 _StatusHeader(status: status),
                 const SizedBox(height: 4),
                 _StatusContent(status: status),
-                const Divider(height: 16, color: Colors.grey),
+                const SizedBox(height: 8),
+                const Divider(height: 3, color: Colors.grey),
               ],
             ),
           ),
@@ -64,27 +65,38 @@ class _StatusHeader extends StatelessWidget {
         Theme.of(context).textTheme.bodyText1.copyWith(color: Colors.grey);
     return Row(
       children: [
-        RichText(
-          text: MastodonTextSpan(
-            text: status.account.displayName,
-            emojis: status.account.emojis,
-            emojiSize: Theme.of(context).textTheme.bodyText1.fontSize * 1.2,
-            style: baseTextStyle.copyWith(fontWeight: FontWeight.bold),
+        Expanded(
+          child: Row(
+            children: [
+              RichText(
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                text: MastodonTextSpan(
+                  text: status.account.displayName,
+                  emojis: status.account.emojis,
+                  emojiSize:
+                      Theme.of(context).textTheme.bodyText1.fontSize * 1.2,
+                  style: baseTextStyle.copyWith(fontWeight: FontWeight.bold),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '@${status.account.username}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: baseTextStyle,
+                ),
+              ),
+            ],
           ),
         ),
         const SizedBox(width: 8),
         Text(
-          '@${status.account.username}',
+          timeago.format(status.createdAt),
           style: baseTextStyle,
-        ),
-        Expanded(
-          child: Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              timeago.format(status.createdAt),
-              style: baseTextStyle,
-            ),
-          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
       ],
     );
