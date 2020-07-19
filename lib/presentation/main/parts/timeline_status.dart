@@ -81,6 +81,7 @@ class _StatusHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final baseTextStyle =
         Theme.of(context).textTheme.bodyText1.copyWith(color: Colors.grey);
+    final platformTextScaleFactor = MediaQuery.of(context).textScaleFactor;
     return Row(
       children: [
         Expanded(
@@ -95,11 +96,14 @@ class _StatusHeader extends StatelessWidget {
                   emojis: status.account.emojis,
                   emojiSize:
                       Theme.of(context).textTheme.bodyText1.fontSize * 1.2,
-                  style: baseTextStyle.copyWith(fontWeight: FontWeight.bold),
+                  style: baseTextStyle
+                      .copyWith(fontWeight: FontWeight.bold)
+                      .apply(fontSizeFactor: platformTextScaleFactor),
                 ),
                 TextSpan(
                   text: '  @${status.account.username}',
-                  style: baseTextStyle.apply(fontSizeFactor: 0.8),
+                  style: baseTextStyle.apply(
+                      fontSizeFactor: 0.8 * platformTextScaleFactor),
                 )
               ],
             ),
@@ -123,12 +127,18 @@ class _StatusContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final platformTextScaleFactor = MediaQuery.of(context).textScaleFactor;
     return RichText(
       text: MastodonTextSpan(
         text: status.content,
         emojis: status.emojis,
-        emojiSize: Theme.of(context).textTheme.bodyText1.fontSize * 1.2,
-        style: Theme.of(context).textTheme.bodyText1,
+        emojiSize: Theme.of(context).textTheme.bodyText1.fontSize *
+            1.2 *
+            platformTextScaleFactor,
+        style: Theme.of(context)
+            .textTheme
+            .bodyText1
+            .apply(fontSizeFactor: platformTextScaleFactor),
         onTapLink: (url) {
           FlutterWebBrowser.openWebPage(url: url);
         },

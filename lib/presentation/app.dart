@@ -21,7 +21,7 @@ class DoncubeApp extends StatelessWidget {
         if (snapshot.hasData) {
           return _buildChild(snapshot.data);
         } else {
-          return const Scaffold();
+          return Container(color: Colors.white);
         }
       },
     );
@@ -56,6 +56,7 @@ class DoncubeApp extends StatelessWidget {
           Locale('en', ''),
           Locale('ja', ''),
         ],
+        theme: _createTheme(context),
         home: Consumer<SessionService>(
           builder: (context, sessionService, child) =>
               sessionService.isStoredAnySession()
@@ -65,4 +66,9 @@ class DoncubeApp extends StatelessWidget {
       ),
     );
   }
+}
+
+ThemeData _createTheme(BuildContext context) {
+  final base = ThemeData.light();
+  return base;
 }
