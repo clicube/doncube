@@ -4,6 +4,7 @@ import 'package:doncube/domain/timeline/timeline_service.dart';
 import 'package:doncube/presentation/main/parts/timeline_status.dart';
 import 'package:doncube/presentation/welcome/welcome_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:mastodon_dart/mastodon_dart.dart';
 import 'package:provider/provider.dart';
 
@@ -53,13 +54,26 @@ class _Timeline extends StatelessWidget {
 
     return StreamBuilder<List<Status>>(
         stream: timelineService.timeline,
-        initialData: const <Status>[],
-        builder: (context, snapshot) => ListView(
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            SchedulerBinding.instance.addPostFrameCallback((_) {
+              Scaffold.of(context).showSnackBar(
+                const SnackBar(content: Text('Timeline load failed')),
+              );
+            });
+            return Container();
+          }
+          if (snapshot.hasData) {
+            return ListView(
               children: snapshot.data
                   .map((e) => StatusWidget(
                         status: e,
                       ))
                   .toList(),
-            ));
+            );
+          } else {
+            return const Center(child: CircularProgressIndicator());
+          }
+        });
   }
 }

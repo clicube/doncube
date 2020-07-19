@@ -18,8 +18,11 @@ class TimelineService implements SessionWiredService {
   Stream<List<Status>> get timeline => _controller.stream;
 
   Future<void> update() async {
-    final list = await session.mastodon.timeline();
-    print(list.map((e) => e.content));
-    _controller.sink.add(list);
+    final list = await session.mastodon.timeline().catchError((Object error) {
+      _controller.sink.addError(error);
+    });
+    if (list != null) {
+      _controller.sink.add(list);
+    }
   }
 }
