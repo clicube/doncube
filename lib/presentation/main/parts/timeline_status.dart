@@ -11,43 +11,52 @@ class StatusWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.only(top: 8, right: 8, left: 8, bottom: 0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.only(top: 8, right: 12, left: 12, bottom: 0),
+      child: Column(
         children: [
-          Column(
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 4),
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: Colors.grey,
-                    width: 0.5,
+              Column(
+                children: [
+                  const SizedBox(height: 4),
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: Colors.grey,
+                        width: 0.5,
+                      ),
+                      borderRadius: BorderRadius.circular(100),
+                      image: DecorationImage(
+                        image: Image.network(
+                          status.account.avatarStatic.toString(),
+                        ).image,
+                      ),
+                    ),
                   ),
-                  borderRadius: BorderRadius.circular(100),
-                  image: DecorationImage(
-                    image: Image.network(
-                      status.account.avatarStatic.toString(),
-                    ).image,
-                  ),
+                  const SizedBox(height: 8),
+                ],
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _StatusHeader(status: status),
+                    const SizedBox(height: 4),
+                    _StatusContent(status: status),
+                  ],
                 ),
               ),
             ],
           ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _StatusHeader(status: status),
-                const SizedBox(height: 4),
-                _StatusContent(status: status),
-                const SizedBox(height: 8),
-                const Divider(height: 2.5, color: Colors.grey),
-              ],
-            ),
+          const SizedBox(height: 8),
+          const Divider(
+            height: 2.5,
+            color: Colors.grey,
+            indent: 56,
           ),
         ],
       ),
