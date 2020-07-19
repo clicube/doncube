@@ -45,7 +45,7 @@ class StatusWidget extends StatelessWidget {
                 const SizedBox(height: 4),
                 _StatusContent(status: status),
                 const SizedBox(height: 8),
-                const Divider(height: 3, color: Colors.grey),
+                const Divider(height: 2.5, color: Colors.grey),
               ],
             ),
           ),
@@ -66,35 +66,31 @@ class _StatusHeader extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Row(
-            children: [
-              RichText(
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                text: MastodonTextSpan(
+          child: RichText(
+            maxLines: 1,
+            overflow: TextOverflow.fade,
+            softWrap: false,
+            text: TextSpan(
+              children: [
+                MastodonTextSpan(
                   text: status.account.displayName,
                   emojis: status.account.emojis,
                   emojiSize:
                       Theme.of(context).textTheme.bodyText1.fontSize * 1.2,
                   style: baseTextStyle.copyWith(fontWeight: FontWeight.bold),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  '@${status.account.username}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: baseTextStyle,
-                ),
-              ),
-            ],
+                TextSpan(
+                  text: '  @${status.account.username}',
+                  style: baseTextStyle.apply(fontSizeFactor: 0.8),
+                )
+              ],
+            ),
           ),
         ),
         const SizedBox(width: 8),
         Text(
           timeago.format(status.createdAt),
-          style: baseTextStyle,
+          style: baseTextStyle.apply(fontSizeFactor: 0.8),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
