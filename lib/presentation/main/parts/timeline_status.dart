@@ -10,42 +10,20 @@ class StatusWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return Padding(
       padding: const EdgeInsets.only(top: 8, right: 12, left: 12, bottom: 0),
       child: Column(
         children: [
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Column(
-                children: [
-                  const SizedBox(height: 4),
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: Colors.grey,
-                        width: 0.5,
-                      ),
-                      borderRadius: BorderRadius.circular(100),
-                      image: DecorationImage(
-                        image: Image.network(
-                          status.account.avatarStatic.toString(),
-                        ).image,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                ],
-              ),
-              const SizedBox(width: 8),
+              _AvatarArea(status: status),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _StatusHeader(status: status),
-                    const SizedBox(height: 4),
                     _StatusContent(status: status),
                   ],
                 ),
@@ -60,6 +38,37 @@ class StatusWidget extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _AvatarArea extends StatelessWidget {
+  const _AvatarArea({@required this.status, Key key}) : super(key: key);
+  final Status status;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        const SizedBox(height: 4),
+        Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: Colors.grey,
+              width: 0.5,
+            ),
+            borderRadius: BorderRadius.circular(100),
+            image: DecorationImage(
+              image: Image.network(
+                status.account.avatarStatic.toString(),
+              ).image,
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+      ],
     );
   }
 }
