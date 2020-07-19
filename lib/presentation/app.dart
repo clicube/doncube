@@ -5,6 +5,7 @@ import 'package:doncube/domain/timeline/timeline_service.dart';
 import 'package:doncube/presentation/main/session_context.dart';
 import 'package:doncube/presentation/welcome/welcome_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -20,7 +21,7 @@ class DoncubeApp extends StatelessWidget {
         if (snapshot.hasData) {
           return _buildChild(snapshot.data);
         } else {
-          return Container();
+          return const Scaffold();
         }
       },
     );
@@ -46,6 +47,15 @@ class DoncubeApp extends StatelessWidget {
       ],
       builder: (context, child) => MaterialApp(
         title: 'Doncube',
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [
+          Locale('en', ''),
+          Locale('ja', ''),
+        ],
         home: Consumer<SessionService>(
           builder: (context, sessionService, child) =>
               sessionService.isStoredAnySession()
