@@ -135,9 +135,9 @@ class MastodonTextSpan extends TextSpan {
           print('emoji match: ${m.group(1)}');
           print(emojiSize);
           final url = emojis
-              .firstWhere((e) => e.shortcode == m.group(1))
+              .firstWhere((e) => e.shortcode == m.group(1), orElse: () => null)
               ?.url
-              .toString();
+              ?.toString();
           if (url != null) {
             print(url);
             spans.add(WidgetSpan(
