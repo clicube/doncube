@@ -7,6 +7,7 @@ import 'package:doncube/presentation/welcome/welcome_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
+import 'package:provider/single_child_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class DoncubeApp extends StatelessWidget {
@@ -19,56 +20,78 @@ class DoncubeApp extends StatelessWidget {
       future: SharedPreferences.getInstance(),
       builder: (context, snapshot) {
         if (snapshot.hasData) {
-          return _buildChild(snapshot.data);
+          return _MainApp(sharedPrefs: snapshot.data);
         } else {
-          return Container(color: Colors.white);
+          return const _SplashApp();
         }
       },
     );
   }
+}
 
-  Widget _buildChild(SharedPreferences sharedPrefs) {
-    return MultiProvider(
-      providers: [
-        Provider(
-          create: (context) {
-            final oAuthAppStore = OAuthAppStore(sharedPrefs);
-            final sessionStore = SessionStore(sharedPrefs);
-            final sessionService = SessionService(
-              oAuthAppStore: oAuthAppStore,
-              sessionStore: sessionStore,
-            );
-            return sessionService;
-          },
-        ),
-        Provider(
-          create: (context) => TimelineServiceManager(),
-        )
-      ],
-      builder: (context, child) => MaterialApp(
-        title: 'Doncube',
-        localizationsDelegates: const [
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: const [
-          Locale('en', ''),
-          Locale('ja', ''),
-        ],
-        theme: _createTheme(context),
-        home: Consumer<SessionService>(
-          builder: (context, sessionService, child) =>
-              sessionService.isStoredAnySession()
-                  ? SessionContext.mainPage(sessionService.getSessions().first)
-                  : const WelcomePage(),
-        ),
-      ),
+class _SplashApp extends StatelessWidget {
+  const _SplashApp({Key key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return const MaterialApp(
+      title: 'Doncube',
+      home: Scaffold(),
     );
   }
 }
 
-ThemeData _createTheme(BuildContext context) {
-  final base = ThemeData.light();
-  return base;
+class _MainApp extends StatelessWidget {
+  const _MainApp({@required this.sharedPrefs, Key key}) : super(key: key);
+  final SharedPreferences sharedPrefs;
+
+  @override
+  Widget build(BuildContext context) {
+    return MultiProvider(
+      providers: _buildProviders(sharedPrefs),
+      builder: (context, child) {
+        final sessionService = context.watch<SessionService>();
+        return MaterialApp(
+          title: 'Doncube',
+          theme: _buildTheme(context),
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('en', ''),
+            Locale('ja', ''),
+          ],
+          home: sessionService.isStoredAnySession()
+              ? SessionContext.mainPage(sessionService.getSessions().first)
+              : const WelcomePage(),
+        );
+      },
+    );
+  }
+
+  ThemeData _buildTheme(BuildContext context) {
+    final base = ThemeData.light();
+    return base;
+  }
+
+  List<SingleChildWidget> _buildProviders(SharedPreferences sharedPrefs) {
+    return [
+      Provider(
+        create: (context) {
+          final oAuthAppStore = OAuthAppStore(sharedPrefs);
+          final sessionStore = SessionStore(sharedPrefs);
+          final sessionService = SessionService(
+            oAuthAppStore: oAuthAppStore,
+            sessionStore: sessionStore,
+          );
+          return sessionService;
+        },
+      ),
+      Provider(
+        create: (context) => TimelineServiceManager(),
+      )
+    ];
+  }
 }
