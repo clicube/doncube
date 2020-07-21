@@ -1,5 +1,5 @@
-import 'package:doncube/data/session/session_store.dart';
 import 'package:doncube/data/oauth_app/oauth_app_store.dart';
+import 'package:doncube/data/session/session_store.dart';
 import 'package:doncube/domain/session/session_service.dart';
 import 'package:doncube/domain/timeline/timeline_service.dart';
 import 'package:doncube/presentation/main/session_context.dart';
@@ -9,9 +9,12 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
 class DoncubeApp extends StatelessWidget {
-  const DoncubeApp({Key key}) : super(key: key);
+  DoncubeApp({Key key}) : super(key: key) {
+    timeago.setLocaleMessages('ja', timeago.JaMessages());
+  }
 
   @override
   Widget build(BuildContext context) {

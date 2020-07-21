@@ -131,8 +131,9 @@ class _StatusTime extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     context.watch<PeriodicNotifier>();
+    final locale = Localizations.localeOf(context);
     return Text(
-      timeago.format(status.createdAt),
+      timeago.format(status.createdAt, locale: locale.toLanguageTag()),
       style: style,
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
