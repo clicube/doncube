@@ -1,8 +1,11 @@
-import 'package:doncube/data/account/account.dart';
-import 'package:doncube/domain/account/account_service.dart';
-import 'package:doncube/presentation/signin/signin_page.dart';
+import 'package:doncube/data/session/session.dart';
+import 'package:doncube/domain/session/session_service.dart';
+import 'package:doncube/domain/timeline/timeline_service.dart';
+import 'package:doncube/presentation/main/parts/timeline_status.dart';
 import 'package:doncube/presentation/welcome/welcome_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:mastodon_dart/mastodon_dart.dart';
 import 'package:provider/provider.dart';
 
 class MainPage extends StatelessWidget {
@@ -10,20 +13,17 @@ class MainPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final token = context.watch<Account>().token;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Main Page'),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+      body: const _Timeline(),
+      drawer: Drawer(
+        child: ListView(
           children: [
-            Text('Access token: $token'),
-            const SizedBox(height: 48),
-            RaisedButton(
-              onPressed: () => _signOut(context),
-              child: Text('Sign out'),
+            ListTile(
+              title: const Text('Sign out'),
+              onTap: () => _signOut(context),
             ),
           ],
         ),
@@ -32,11 +32,48 @@ class MainPage extends StatelessWidget {
   }
 
   Future<void> _signOut(BuildContext context) async {
-    final account = context.read<Account>();
-    await context.read<AccountService>().signOut(account);
+    final session = context.read<Session>();
+    await context.read<SessionService>().signOut(session);
     final nextRoute =
         MaterialPageRoute<Object>(builder: (context) => const WelcomePage());
     await Navigator.of(context, rootNavigator: true)
         .pushAndRemoveUntil(nextRoute, (route) => false);
+  }
+}
+
+class _Timeline extends StatelessWidget {
+  const _Timeline({Key key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final session = context.watch<Session>();
+    final timelineService = context
+        .watch<TimelineServiceManager>()
+        .getServiceFor(session)
+          ..update();
+
+    return StreamBuilder<List<Status>>(
+        stream: timelineService.timeline,
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            SchedulerBinding.instance.addPostFrameCallback((_) {
+              Scaffold.of(context).showSnackBar(
+                const SnackBar(content: Text('Timeline load failed')),
+              );
+            });
+            return Container();
+          }
+          if (snapshot.hasData) {
+            return ListView(
+              children: snapshot.data
+                  .map((e) => StatusWidget(
+                        status: e,
+                      ))
+                  .toList(),
+            );
+          } else {
+            return const Center(child: CircularProgressIndicator());
+          }
+        });
   }
 }

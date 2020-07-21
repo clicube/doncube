@@ -1,27 +1,27 @@
 import 'dart:convert';
 
-import 'package:doncube/data/account/account.dart';
-import 'package:doncube/data/account/account_store.dart';
+import 'package:doncube/data/session/session.dart';
+import 'package:doncube/data/session/session_store.dart';
 import 'package:doncube/data/oauth_app/oauth_app.dart';
 import 'package:doncube/data/oauth_app/oauth_app_store.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_web_auth/flutter_web_auth.dart';
 import 'package:http/http.dart' as http;
-import 'package:mastodon_dart/mastodon_dart.dart' as mstdn;
+import 'package:mastodon_dart/mastodon_dart.dart';
 
-class AccountService {
-  const AccountService({
+class SessionService {
+  const SessionService({
     @required this.oAuthAppStore,
-    @required this.accountStore,
+    @required this.sessionStore,
   });
   final OAuthAppStore oAuthAppStore;
-  final AccountStore accountStore;
+  final SessionStore sessionStore;
   static const appScheme = 'jp.cubik.doncube';
   static const redirectUri = '$appScheme://callback';
 
-  Future<Account> signIn(String instanceHostName) async {
+  Future<Session> signIn(String instanceHostName) async {
     final baseUri = Uri.parse('https://$instanceHostName');
-    final mastodon = mstdn.Mastodon(baseUri);
+    final mastodon = Mastodon(baseUri);
 
     final oAuthApp = oAuthAppStore.find(instanceHostName) ??
         await _registerOAuthApp(mastodon, instanceHostName, redirectUri);
@@ -60,27 +60,27 @@ class AccountService {
 
     print('accessToken: $accessToken');
 
-    final account = Account.create(
+    final session = Session.create(
       instanceHostName: instanceHostName,
       token: accessToken,
     );
 
-    await accountStore.save(account);
+    await sessionStore.save(session);
 
-    return account;
+    return session;
   }
 
-  List<Account> getAccounts() => accountStore.getAll();
+  List<Session> getSessions() => sessionStore.getAll();
 
-  bool isStoredAnyAccount() => accountStore.getAll().isNotEmpty;
+  bool isStoredAnySession() => sessionStore.getAll().isNotEmpty;
 
-  Future<void> signOut(Account account) async {
+  Future<void> signOut(Session session) async {
     // TODO(clicube): should revoke token
-    await accountStore.remove(account);
+    await sessionStore.remove(session);
   }
 
-  Future<OAuthApp> _registerOAuthApp(mstdn.Mastodon mastodon,
-      String instanceHostName, String redirectUri) async {
+  Future<OAuthApp> _registerOAuthApp(
+      Mastodon mastodon, String instanceHostName, String redirectUri) async {
     print('attempt to register new OAuth application');
     final credentials = await mastodon.appCredentials(
         Uri.parse('https://doncube.cubik.jp'), redirectUri, 'Doncube');

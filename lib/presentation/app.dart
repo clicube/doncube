@@ -1,10 +1,13 @@
-import 'package:doncube/data/account/account_store.dart';
+import 'package:doncube/data/session/session_store.dart';
 import 'package:doncube/data/oauth_app/oauth_app_store.dart';
-import 'package:doncube/domain/account/account_service.dart';
-import 'package:doncube/presentation/main/account_context.dart';
+import 'package:doncube/domain/session/session_service.dart';
+import 'package:doncube/domain/timeline/timeline_service.dart';
+import 'package:doncube/presentation/main/session_context.dart';
 import 'package:doncube/presentation/welcome/welcome_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
+import 'package:provider/single_child_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class DoncubeApp extends StatelessWidget {
@@ -17,45 +20,78 @@ class DoncubeApp extends StatelessWidget {
       future: SharedPreferences.getInstance(),
       builder: (context, snapshot) {
         if (snapshot.hasData) {
-          return _buildChild(snapshot.data);
+          return _MainApp(sharedPrefs: snapshot.data);
         } else {
-          return Container();
+          return const _SplashApp();
         }
       },
     );
   }
+}
 
-  Widget _buildChild(SharedPreferences sharedPrefs) {
-//    final oAuthAppStore = OAuthAppStore(sharedPrefs);
-//    final accountStore = AccountStore(sharedPrefs);
-//    final accountService = AccountService(
-//      oAuthAppStore: oAuthAppStore,
-//      accountStore: accountStore,
-//    );
-    return MultiProvider(
-      providers: [
-//        Provider.value(value: accountService),
-        Provider(
-          create: (context) {
-            final oAuthAppStore = OAuthAppStore(sharedPrefs);
-            final accountStore = AccountStore(sharedPrefs);
-            final accountService = AccountService(
-              oAuthAppStore: oAuthAppStore,
-              accountStore: accountStore,
-            );
-            return accountService;
-          },
-        ),
-      ],
-      builder: (context, child) => MaterialApp(
-        title: 'Doncube',
-        home: Consumer<AccountService>(
-          builder: (context, accountService, child) =>
-              accountService.isStoredAnyAccount()
-                  ? AccountContext.mainPage(accountService.getAccounts().first)
-                  : const WelcomePage(),
-        ),
-      ),
+class _SplashApp extends StatelessWidget {
+  const _SplashApp({Key key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return const MaterialApp(
+      title: 'Doncube',
+      home: Scaffold(),
     );
+  }
+}
+
+class _MainApp extends StatelessWidget {
+  const _MainApp({@required this.sharedPrefs, Key key}) : super(key: key);
+  final SharedPreferences sharedPrefs;
+
+  @override
+  Widget build(BuildContext context) {
+    return MultiProvider(
+      providers: _buildProviders(sharedPrefs),
+      builder: (context, child) {
+        final sessionService = context.watch<SessionService>();
+        return MaterialApp(
+          title: 'Doncube',
+          theme: _buildTheme(context),
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('en', ''),
+            Locale('ja', ''),
+          ],
+          home: sessionService.isStoredAnySession()
+              ? SessionContext.mainPage(sessionService.getSessions().first)
+              : const WelcomePage(),
+        );
+      },
+    );
+  }
+
+  ThemeData _buildTheme(BuildContext context) {
+    final base = ThemeData.light();
+    return base;
+  }
+
+  List<SingleChildWidget> _buildProviders(SharedPreferences sharedPrefs) {
+    return [
+      Provider(
+        create: (context) {
+          final oAuthAppStore = OAuthAppStore(sharedPrefs);
+          final sessionStore = SessionStore(sharedPrefs);
+          final sessionService = SessionService(
+            oAuthAppStore: oAuthAppStore,
+            sessionStore: sessionStore,
+          );
+          return sessionService;
+        },
+      ),
+      Provider(
+        create: (context) => TimelineServiceManager(),
+      )
+    ];
   }
 }
