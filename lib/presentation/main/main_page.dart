@@ -66,12 +66,15 @@ class _Timeline extends StatelessWidget {
               return Container();
             }
             if (snapshot.hasData) {
-              return ListView(
-                children: snapshot.data
-                    .map((e) => StatusWidget(
-                          status: e,
-                        ))
-                    .toList(),
+              return RefreshIndicator(
+                onRefresh: timelineService.update,
+                child: ListView(
+                  children: snapshot.data
+                      .map((e) => StatusWidget(
+                            status: e,
+                          ))
+                      .toList(),
+                ),
               );
             } else {
               return const Center(child: CircularProgressIndicator());
