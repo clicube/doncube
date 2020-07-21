@@ -52,28 +52,31 @@ class _Timeline extends StatelessWidget {
         .getServiceFor(session)
           ..update();
 
-    return StreamBuilder<List<Status>>(
-        stream: timelineService.timeline,
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            SchedulerBinding.instance.addPostFrameCallback((_) {
-              Scaffold.of(context).showSnackBar(
-                const SnackBar(content: Text('Timeline load failed')),
+    return ChangeNotifierProvider(
+      create: (_) => PeriodicNotifier(const Duration(seconds: 10)),
+      child: StreamBuilder<List<Status>>(
+          stream: timelineService.timeline,
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              SchedulerBinding.instance.addPostFrameCallback((_) {
+                Scaffold.of(context).showSnackBar(
+                  const SnackBar(content: Text('Timeline load failed')),
+                );
+              });
+              return Container();
+            }
+            if (snapshot.hasData) {
+              return ListView(
+                children: snapshot.data
+                    .map((e) => StatusWidget(
+                          status: e,
+                        ))
+                    .toList(),
               );
-            });
-            return Container();
-          }
-          if (snapshot.hasData) {
-            return ListView(
-              children: snapshot.data
-                  .map((e) => StatusWidget(
-                        status: e,
-                      ))
-                  .toList(),
-            );
-          } else {
-            return const Center(child: CircularProgressIndicator());
-          }
-        });
+            } else {
+              return const Center(child: CircularProgressIndicator());
+            }
+          }),
+    );
   }
 }

@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:doncube/presentation/main/parts/mastodon_textspan.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_web_browser/flutter_web_browser.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:mastodon_dart/mastodon_dart.dart';
+import 'package:provider/provider.dart';
 
 class StatusWidget extends StatelessWidget {
   const StatusWidget({this.status, Key key}) : super(key: key);
@@ -110,13 +113,29 @@ class _StatusHeader extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
-        Text(
-          timeago.format(status.createdAt),
+        _StatusTime(
+          status: status,
           style: baseTextStyle.apply(fontSizeFactor: 0.8),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
         ),
       ],
+    );
+  }
+}
+
+class _StatusTime extends StatelessWidget {
+  const _StatusTime({@required this.status, this.style, Key key})
+      : super(key: key);
+  final Status status;
+  final TextStyle style;
+
+  @override
+  Widget build(BuildContext context) {
+    context.watch<PeriodicNotifier>();
+    return Text(
+      timeago.format(status.createdAt),
+      style: style,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
     );
   }
 }
@@ -144,5 +163,20 @@ class _StatusContent extends StatelessWidget {
         },
       ),
     );
+  }
+}
+
+class PeriodicNotifier extends ChangeNotifier {
+  PeriodicNotifier(Duration duration) : super() {
+    _timer = Timer.periodic(duration, (_) {
+      notifyListeners();
+    });
+  }
+  Timer _timer;
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
   }
 }
