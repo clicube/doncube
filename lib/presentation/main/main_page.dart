@@ -47,10 +47,8 @@ class _Timeline extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final session = context.watch<Session>();
-    final timelineService = context
-        .watch<TimelineServiceManager>()
-        .getServiceFor(session)
-          ..update();
+    final timelineService =
+        context.watch<TimelineServiceManager>().getServiceFor(session);
 
     return ChangeNotifierProvider(
       create: (_) => PeriodicNotifier(const Duration(seconds: 10)),

@@ -7,7 +7,8 @@ import 'package:mastodon_dart/mastodon_dart.dart';
 class TimelineServiceManager
     extends SessionWiredServiceManager<TimelineService> {
   @override
-  TimelineService createService(Session session) => TimelineService(session);
+  TimelineService createService(Session session) =>
+      TimelineService(session)..update();
 }
 
 class TimelineService implements SessionWiredService {
