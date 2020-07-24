@@ -5,7 +5,6 @@ import 'package:doncube/presentation/main/parts/timeline_status.dart';
 import 'package:doncube/presentation/welcome/welcome_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:mastodon_dart/mastodon_dart.dart';
 import 'package:provider/provider.dart';
 
 class MainPage extends StatelessWidget {
@@ -18,15 +17,19 @@ class MainPage extends StatelessWidget {
         title: const Text('Main Page'),
       ),
       body: const _Timeline(),
-      drawer: Drawer(
-        child: ListView(
-          children: [
-            ListTile(
-              title: const Text('Sign out'),
-              onTap: () => _signOut(context),
-            ),
-          ],
-        ),
+      drawer: _buildDrawer(context),
+    );
+  }
+
+  Widget _buildDrawer(BuildContext context) {
+    return Drawer(
+      child: ListView(
+        children: [
+          ListTile(
+            title: const Text('Sign out'),
+            onTap: () => _signOut(context),
+          ),
+        ],
       ),
     );
   }
@@ -49,35 +52,99 @@ class _Timeline extends StatelessWidget {
     final session = context.watch<Session>();
     final timelineService =
         context.watch<TimelineServiceManager>().getServiceFor(session);
+    final scrollController = PrimaryScrollController.of(context);
 
     return ChangeNotifierProvider(
       create: (_) => PeriodicNotifier(const Duration(seconds: 10)),
-      child: StreamBuilder<List<Status>>(
+      child: StreamBuilder<List<TimelineElement>>(
           stream: timelineService.timeline,
           builder: (context, snapshot) {
             if (snapshot.hasError) {
-              SchedulerBinding.instance.addPostFrameCallback((_) {
-                Scaffold.of(context).showSnackBar(
-                  const SnackBar(content: Text('Timeline load failed')),
-                );
-              });
+              _handleError(context);
               return Container();
             }
             if (snapshot.hasData) {
-              return RefreshIndicator(
-                onRefresh: timelineService.update,
-                child: ListView(
-                  children: snapshot.data
-                      .map((e) => StatusWidget(
-                            status: e,
-                          ))
-                      .toList(),
-                ),
-              );
-            } else {
-              return const Center(child: CircularProgressIndicator());
+              return _buildTimeline(
+                  timelineService, snapshot.data, scrollController);
             }
+            return const Center(child: CircularProgressIndicator());
           }),
     );
+  }
+
+  Widget _buildTimeline(TimelineService timelineService,
+      List<TimelineElement> data, ScrollController scrollController) {
+    return Provider(
+      create: (context) => _TimelineScrollControllerWrapper(
+        scrollController: scrollController,
+        onBottom: timelineService.loadMore,
+      ),
+      dispose: (context, _TimelineScrollControllerWrapper wrapper) =>
+          wrapper.dispose(),
+      lazy: false,
+      child: RefreshIndicator(
+        onRefresh: timelineService.update,
+        child: Scrollbar(
+          controller: scrollController,
+          child: ListView(
+            controller: scrollController,
+            children: data.map((e) {
+              switch (e.runtimeType) {
+                case StatusElement:
+                  return StatusWidget(status: (e as StatusElement).status);
+                case GapElement:
+                  return Container(
+                    height: 40,
+                    alignment: Alignment.center,
+                    child: const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  );
+              }
+            }).toList(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _handleError(BuildContext context) {
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      Scaffold.of(context).showSnackBar(
+        const SnackBar(content: Text('Timeline load failed')),
+      );
+    });
+  }
+}
+
+class _TimelineScrollControllerWrapper {
+  _TimelineScrollControllerWrapper({
+    @required this.scrollController,
+    @required this.onBottom,
+  }) {
+    scrollController.addListener(listener);
+  }
+  final ScrollController scrollController;
+  final Future<void> Function() onBottom;
+
+  bool isProcessing = false;
+
+  Future<void> listener() async {
+    if (isProcessing) {
+      return;
+    }
+    final bottomDistance =
+        scrollController.position.maxScrollExtent - scrollController.offset;
+    if (bottomDistance > 100) {
+      return;
+    }
+    isProcessing = true;
+    await onBottom().whenComplete(() => isProcessing = false);
+  }
+
+  void dispose() {
+    scrollController.removeListener(listener);
   }
 }

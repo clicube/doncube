@@ -12,18 +12,66 @@ class TimelineServiceManager
 }
 
 class TimelineService implements SessionWiredService {
-  TimelineService(this.session) : _controller = StreamController();
-  final Session session;
-  final StreamController<List<Status>> _controller;
+  TimelineService(Session session)
+      : _session = session,
+        _timelineController = StreamController();
+  final Session _session;
+  final StreamController<List<TimelineElement>> _timelineController;
+  Stream<List<TimelineElement>> get timeline => _timelineController.stream;
 
-  Stream<List<Status>> get timeline => _controller.stream;
+  final List<TimelineElement> _cache = [];
 
   Future<void> update() async {
-    final list = await session.mastodon.timeline().catchError((Object error) {
-      _controller.sink.addError(error);
+    final list =
+        await _session.mastodon.timeline(limit: 40).catchError((Object error) {
+      _timelineController.sink.addError(error);
     });
     if (list != null) {
-      _controller.sink.add(list);
+      _cache
+        ..clear()
+        ..addAll(list.map((e) => StatusElement(e)));
+      _timelineController.sink.add(_cache);
     }
   }
+
+  Future<void> loadMore() async {
+    if (_cache.last is GapElement) {
+      return;
+    }
+    _cache.add(const GapElement(isLoading: true));
+    _timelineController.sink.add(_cache);
+
+    final list = await _session.mastodon
+        .timeline(limit: 40, maxId: lastStatus.id)
+        .catchError((Object error) {
+      _timelineController.sink.addError(error);
+      if (_cache.last is GapElement) {
+        _cache.removeLast();
+      }
+    });
+    if (list != null) {
+      if (_cache.last is GapElement) {
+        _cache.removeLast();
+      }
+      _cache.addAll(list.map((e) => StatusElement(e)));
+      _timelineController.sink.add(_cache);
+    }
+  }
+
+  Status get lastStatus =>
+      (_cache.lastWhere((e) => e is StatusElement) as StatusElement).status;
+}
+
+class TimelineElement {
+  const TimelineElement();
+}
+
+class StatusElement extends TimelineElement {
+  const StatusElement(this.status);
+  final Status status;
+}
+
+class GapElement extends TimelineElement {
+  const GapElement({this.isLoading = false});
+  final bool isLoading;
 }
