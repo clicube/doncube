@@ -92,9 +92,6 @@ class _MainApp extends StatelessWidget {
           return sessionService;
         },
       ),
-      Provider(
-        create: (context) => TimelineServiceManager(),
-      )
     ];
   }
 }
