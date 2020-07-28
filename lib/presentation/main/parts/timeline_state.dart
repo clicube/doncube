@@ -17,21 +17,30 @@ abstract class TimelineState with _$TimelineState {
   bool get isLoadingBottom => timeline.last is GapElement;
 }
 
-class TimelineStateNotifier extends StateNotifier<TimelineState> {
-  TimelineStateNotifier({
+class TimelineController extends StateNotifier<TimelineState> {
+  TimelineController({
     @required MastodonService mastodonService,
   })  : _mastodonService = mastodonService,
         super(TimelineState(timeline: [])) {
     _mastodonService.homeTimeline.listen(_onHomeTimelineUpdate);
+    handleInitialLoad();
   }
   final MastodonService _mastodonService;
   List<TimelineFragment> _fragmentList = [];
   List<TimelineElement> _elementList = [];
 
-  bool isScrolling = false;
-  TimelineState nextState;
-  bool isLoadingOlder = false;
-  bool canStartLoadOlder = true;
+  bool _isScrolling = false;
+  TimelineState _nextState;
+  bool _isLoadingOlder = false;
+  bool _canStartLoadOlder = true;
+
+  Future<void> handleInitialLoad() async {
+    state = state.copyWith(timeline: [
+      const GapElement(isLoading: true),
+      ...state.timeline,
+    ]);
+    await _mastodonService.loadHomeTimeline();
+  }
 
   Future<void> handlePullToRefresh() async {
     await _mastodonService.loadLatestHomeTimeline();
@@ -40,14 +49,17 @@ class TimelineStateNotifier extends StateNotifier<TimelineState> {
   bool handleScrollNotification(ScrollNotification scrollNotification) {
     switch (scrollNotification.runtimeType) {
       case ScrollStartNotification:
-        isScrolling = true;
+        _isScrolling = true;
+        if (_isLoadingOlder) {
+          _canStartLoadOlder = false;
+        }
         break;
       case ScrollEndNotification:
-        isScrolling = false;
-        canStartLoadOlder = true;
-        if (nextState != null) {
-          state = nextState;
-          nextState = null;
+        _isScrolling = false;
+        _canStartLoadOlder = true;
+        if (_nextState != null) {
+          state = _nextState;
+          _nextState = null;
         }
         break;
       case ScrollUpdateNotification:
@@ -57,8 +69,8 @@ class TimelineStateNotifier extends StateNotifier<TimelineState> {
             scrollUpdateNotification.metrics.pixels;
         print(distance);
         if (distance < 20 &&
-            isLoadingOlder == false &&
-            canStartLoadOlder == true &&
+            _isLoadingOlder == false &&
+            _canStartLoadOlder == true &&
             state.timeline.isNotEmpty) {
           handleScrolledToBottom();
         }
@@ -68,21 +80,24 @@ class TimelineStateNotifier extends StateNotifier<TimelineState> {
   }
 
   Future<void> handleScrolledToBottom() async {
-    isLoadingOlder = true;
-    canStartLoadOlder = false;
+    _isLoadingOlder = true;
+    _canStartLoadOlder = false;
     state = state.copyWith(timeline: [
       ...state.timeline,
       const GapElement(isLoading: true),
     ]);
-    await _mastodonService.loadOlderHomeTimeline(_fragmentList.last);
-    isLoadingOlder = false;
+    await _mastodonService
+        .loadOlderHomeTimeline(_fragmentList.last)
+        .whenComplete(() {
+      _isLoadingOlder = false;
+    });
   }
 
   void _onHomeTimelineUpdate(List<TimelineFragment> data) {
     _fragmentList = data;
     _elementList = _fragmentListToElementList(data);
-    if (isScrolling) {
-      nextState = state.copyWith(timeline: _elementList);
+    if (_isScrolling) {
+      _nextState = state.copyWith(timeline: _elementList);
     } else {
       state = state.copyWith(timeline: _elementList);
     }
