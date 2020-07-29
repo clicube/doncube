@@ -1,4 +1,4 @@
-import 'package:doncube/domain/timeline/timeline_service.dart';
+import 'package:doncube/domain/mastodon/mastodon_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';

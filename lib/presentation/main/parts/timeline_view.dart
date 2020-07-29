@@ -1,5 +1,5 @@
 import 'package:doncube/data/session/session.dart';
-import 'package:doncube/domain/timeline/timeline_service.dart';
+import 'package:doncube/domain/mastodon/mastodon_service.dart';
 import 'package:doncube/presentation/main/parts/status_widget.dart';
 import 'package:doncube/presentation/main/parts/timeline_state.dart';
 import 'package:flutter/cupertino.dart';
