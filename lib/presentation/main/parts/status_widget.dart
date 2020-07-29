@@ -34,11 +34,6 @@ class StatusWidget extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          const Divider(
-            height: 0,
-            color: Colors.grey,
-            indent: 56,
-          ),
         ],
       ),
     );

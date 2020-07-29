@@ -36,29 +36,46 @@ class _TimelineView extends StatelessWidget {
           child: NotificationListener<ScrollNotification>(
             onNotification:
                 context.watch<TimelineController>().handleScrollNotification,
-            child: ListView(
-              children: context
-                  .select<TimelineState, List<TimelineElement>>(
-                      (n) => n.timeline)
-                  .map((e) {
-                switch (e.runtimeType) {
-                  case StatusElement:
-                    return StatusWidget(status: (e as StatusElement).status);
-                  case GapElement:
-                    return _TimelineGap(
-                        isLoading: (e as GapElement).isLoading,
-                        onTapLoad: () async {
-                          await context
-                              .read<TimelineController>()
-                              .loadGapNewer(e as GapElement);
-                        });
-                }
-              }).toList(),
+            child: ListView.separated(
+              itemBuilder: (context, index) => _TimelineViewListItem(index),
+              itemCount:
+                  context.select<TimelineState, int>((s) => s.timeline.length),
+              separatorBuilder: (context, index) => const Divider(
+                height: 0,
+                indent: 68,
+                endIndent: 12,
+                color: Colors.grey,
+              ),
             ),
           ),
         ),
       ),
     );
+  }
+}
+
+class _TimelineViewListItem extends StatelessWidget {
+  const _TimelineViewListItem(this.index, {Key key}) : super(key: key);
+  final int index;
+
+  @override
+  Widget build(BuildContext context) {
+    final element = context
+        .select<TimelineState, TimelineElement>((n) => n.timeline[index]);
+    switch (element.runtimeType) {
+      case StatusElement:
+        return StatusWidget(status: (element as StatusElement).status);
+      case GapElement:
+        return _TimelineGap(
+            isLoading: (element as GapElement).isLoading,
+            onTapLoad: () async {
+              await context
+                  .read<TimelineController>()
+                  .loadGapNewer(element as GapElement);
+            });
+      default:
+        return Container();
+    }
   }
 }
 
@@ -72,23 +89,10 @@ class _TimelineGap extends StatelessWidget {
   final Future<void> Function() onTapLoad;
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          height: 60,
-          alignment: Alignment.center,
-          child:
-              isLoading ? _buildLoadingViewContent() : _buildGapViewContent(),
-        ),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 12),
-          child: Divider(
-            height: 0,
-            color: Colors.grey,
-            indent: 56,
-          ),
-        ),
-      ],
+    return Container(
+      height: 60,
+      alignment: Alignment.center,
+      child: isLoading ? _buildLoadingViewContent() : _buildGapViewContent(),
     );
   }
 
@@ -96,7 +100,13 @@ class _TimelineGap extends StatelessWidget {
     return InkWell(
       onTap: onTapLoad,
       child: const SizedBox.expand(
-        child: Center(child: Text('Load')),
+        child: Center(
+            child: Text(
+          'Load',
+          style: TextStyle(
+            color: Colors.grey,
+          ),
+        )),
       ),
     );
   }
