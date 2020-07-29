@@ -1,7 +1,6 @@
 import 'package:doncube/data/oauth_app/oauth_app_store.dart';
 import 'package:doncube/data/session/session_store.dart';
 import 'package:doncube/domain/session/session_service.dart';
-import 'package:doncube/domain/timeline/timeline_service.dart';
 import 'package:doncube/presentation/main/session_context.dart';
 import 'package:doncube/presentation/welcome/welcome_page.dart';
 import 'package:flutter/material.dart';

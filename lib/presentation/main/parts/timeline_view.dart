@@ -47,8 +47,10 @@ class _TimelineView extends StatelessWidget {
                   case GapElement:
                     return _TimelineGap(
                         isLoading: (e as GapElement).isLoading,
-                        onTapLoad: () {
-                          print("AAAAA");
+                        onTapLoad: () async {
+                          await context
+                              .read<TimelineController>()
+                              .loadGapNewer(e as GapElement);
                         });
                 }
               }).toList(),

@@ -28,7 +28,11 @@ class MastodonService implements SessionWiredService {
 
   Future<void> loadHomeTimeline() async {
     final list = await _session.mastodon.timeline(limit: 40);
-    _homeTimelineCache = [TimelineFragment(list)];
+
+    final list1 = list.getRange(0, 2).toList();
+    final list2 = list.getRange(5, 8).toList();
+
+    _homeTimelineCache = [TimelineFragment(list1), TimelineFragment(list2)];
     _homeTimelineController.sink.add(_homeTimelineCache);
   }
 

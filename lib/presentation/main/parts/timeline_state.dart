@@ -93,6 +93,21 @@ class TimelineController extends StateNotifier<TimelineState> {
     });
   }
 
+  Future<void> loadGapNewer(GapElement gapElement) async {
+    final timeline = state.timeline.toList();
+    final targetIndex = timeline.indexOf(gapElement);
+    if (targetIndex < 0) {
+      return;
+    }
+    timeline[targetIndex] = GapElement(
+      isLoading: true,
+      olderFragment: gapElement.olderFragment,
+      newerFragment: gapElement.newerFragment,
+    );
+    state = state.copyWith(timeline: timeline);
+    await _mastodonService.loadOlderHomeTimeline(gapElement.newerFragment);
+  }
+
   void _onHomeTimelineUpdate(List<TimelineFragment> data) {
     _fragmentList = data;
     _elementList = _fragmentListToElementList(data);
@@ -106,13 +121,18 @@ class TimelineController extends StateNotifier<TimelineState> {
   List<TimelineElement> _fragmentListToElementList(
       List<TimelineFragment> list) {
     final result = <TimelineElement>[];
+    TimelineFragment prevFragment;
     for (final fragment in list) {
+      if (prevFragment != null) {
+        result.add(GapElement(
+          newerFragment: prevFragment,
+          olderFragment: fragment,
+        ));
+      }
       for (final status in fragment.list) {
         result.add(StatusElement(status));
       }
-      if (fragment != list.last) {
-        result.add(const GapElement());
-      }
+      prevFragment = fragment;
     }
     return result;
   }
@@ -128,6 +148,12 @@ class StatusElement extends TimelineElement {
 }
 
 class GapElement extends TimelineElement {
-  const GapElement({this.isLoading = false});
+  const GapElement({
+    this.olderFragment,
+    this.newerFragment,
+    this.isLoading = false,
+  });
+  final TimelineFragment olderFragment;
+  final TimelineFragment newerFragment;
   final bool isLoading;
 }
