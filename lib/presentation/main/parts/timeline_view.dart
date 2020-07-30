@@ -40,16 +40,20 @@ class _TimelineView extends StatelessWidget {
               itemBuilder: (context, index) => _TimelineViewListItem(index),
               itemCount:
                   context.select<TimelineState, int>((s) => s.timeline.length),
-              separatorBuilder: (context, index) => const Divider(
-                height: 0,
-                indent: 68,
-                endIndent: 12,
-                color: Colors.grey,
-              ),
+              separatorBuilder: _separator,
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _separator(BuildContext context, int index) {
+    return const Divider(
+      height: 0,
+      indent: 68,
+      endIndent: 12,
+      color: Colors.grey,
     );
   }
 }
