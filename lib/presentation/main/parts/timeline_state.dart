@@ -22,8 +22,7 @@ class TimelineController extends StateNotifier<TimelineState> {
     @required MastodonService mastodonService,
   })  : _mastodonService = mastodonService,
         super(TimelineState(timeline: [])) {
-    _mastodonService.homeTimeline.listen(_onHomeTimelineUpdate);
-    handleInitialLoad();
+    _initialLoad();
   }
   final MastodonService _mastodonService;
   List<TimelineFragment> _fragmentList = [];
@@ -34,16 +33,9 @@ class TimelineController extends StateNotifier<TimelineState> {
   bool _isLoadingOlder = false;
   bool _canStartLoadOlder = true;
 
-  Future<void> handleInitialLoad() async {
-    state = state.copyWith(timeline: [
-      const GapElement(isLoading: true),
-      ...state.timeline,
-    ]);
-    await _mastodonService.loadHomeTimeline();
-  }
-
   Future<void> handlePullToRefresh() async {
-    await _mastodonService.loadLatestHomeTimeline();
+    final timeline = await _mastodonService.loadLatestHomeTimeline();
+    _updateTimeline(timeline);
   }
 
   bool handleScrollNotification(ScrollNotification scrollNotification) {
@@ -72,28 +64,14 @@ class TimelineController extends StateNotifier<TimelineState> {
             _isLoadingOlder == false &&
             _canStartLoadOlder == true &&
             state.timeline.isNotEmpty) {
-          handleScrolledToBottom();
+          _onScrolledToBottom();
         }
         break;
     }
     return false;
   }
 
-  Future<void> handleScrolledToBottom() async {
-    _isLoadingOlder = true;
-    _canStartLoadOlder = false;
-    state = state.copyWith(timeline: [
-      ...state.timeline,
-      const GapElement(isLoading: true),
-    ]);
-    await _mastodonService
-        .loadOlderHomeTimeline(_fragmentList.last)
-        .whenComplete(() {
-      _isLoadingOlder = false;
-    });
-  }
-
-  Future<void> loadGapNewer(GapElement gapElement) async {
+  Future<void> handleTapGap(GapElement gapElement) async {
     final timeline = state.timeline.toList();
     final targetIndex = timeline.indexOf(gapElement);
     if (targetIndex < 0) {
@@ -108,7 +86,31 @@ class TimelineController extends StateNotifier<TimelineState> {
     await _mastodonService.loadOlderHomeTimeline(gapElement.newerFragment);
   }
 
-  void _onHomeTimelineUpdate(List<TimelineFragment> data) {
+  Future<void> _initialLoad() async {
+    state = state.copyWith(timeline: [
+      const GapElement(isLoading: true),
+      ...state.timeline,
+    ]);
+    final timeline = await _mastodonService.loadHomeTimeline();
+    _updateTimeline(timeline);
+  }
+
+  Future<void> _onScrolledToBottom() async {
+    _isLoadingOlder = true;
+    _canStartLoadOlder = false;
+    state = state.copyWith(timeline: [
+      ...state.timeline,
+      const GapElement(isLoading: true),
+    ]);
+    final timeline = await _mastodonService
+        .loadOlderHomeTimeline(_fragmentList.last)
+        .whenComplete(() {
+      _isLoadingOlder = false;
+    });
+    _updateTimeline(timeline);
+  }
+
+  void _updateTimeline(List<TimelineFragment> data) {
     _fragmentList = data;
     _elementList = _fragmentListToElementList(data);
     if (_isScrolling) {

@@ -11,9 +11,6 @@ class MastodonService implements SessionWiredService {
   static final _instances = <String, MastodonService>{};
   final Session _session;
   List<TimelineFragment> _homeTimelineCache = [];
-  final _homeTimelineController = StreamController<List<TimelineFragment>>();
-  Stream<List<TimelineFragment>> get homeTimeline =>
-      _homeTimelineController.stream;
 
   // ignore: prefer_constructors_over_static_methods
   static MastodonService _getOrCreateInstance(Session session) {
@@ -26,13 +23,12 @@ class MastodonService implements SessionWiredService {
     }
   }
 
-  Future<void> loadHomeTimeline() async {
+  Future<List<TimelineFragment>> loadHomeTimeline() async {
     final list = await _session.mastodon.timeline(limit: 40);
-    _homeTimelineCache = [TimelineFragment(list)];
-    _homeTimelineController.sink.add(_homeTimelineCache);
+    return _homeTimelineCache = [TimelineFragment(list)];
   }
 
-  Future<void> loadLatestHomeTimeline() async {
+  Future<List<TimelineFragment>> loadLatestHomeTimeline() async {
     final result = _homeTimelineCache.toList();
     final list = await _session.mastodon.timeline(limit: 40);
     if (result.isEmpty) {
@@ -46,15 +42,15 @@ class MastodonService implements SessionWiredService {
         result.insert(0, TimelineFragment(list));
       }
     }
-    _homeTimelineCache = result;
-    _homeTimelineController.sink.add(_homeTimelineCache);
+    return _homeTimelineCache = result;
   }
 
-  Future<void> loadOlderHomeTimeline(TimelineFragment targetFragment) async {
+  Future<List<TimelineFragment>> loadOlderHomeTimeline(
+      TimelineFragment targetFragment) async {
     final cache = _homeTimelineCache.toList();
     final targetFragmentIndex = cache.indexOf(targetFragment);
     if (targetFragmentIndex < 0) {
-      return;
+      return _homeTimelineCache;
     }
     final list = await _session.mastodon.timeline(
       limit: 40,
@@ -70,8 +66,7 @@ class MastodonService implements SessionWiredService {
         cache.removeAt(targetFragmentIndex + 1);
       }
     }
-    _homeTimelineCache = cache;
-    _homeTimelineController.sink.add(_homeTimelineCache);
+    return _homeTimelineCache = cache;
   }
 
   TimelineFragment _mergeTimelineFragment(

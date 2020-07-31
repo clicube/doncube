@@ -75,7 +75,7 @@ class _TimelineViewListItem extends StatelessWidget {
             onTapLoad: () async {
               await context
                   .read<TimelineController>()
-                  .loadGapNewer(element as GapElement);
+                  .handleTapGap(element as GapElement);
             });
       default:
         return Container();
