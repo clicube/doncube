@@ -2,7 +2,7 @@ import 'package:doncube/data/session/session.dart';
 import 'package:doncube/domain/mastodon/mastodon_service.dart';
 import 'package:doncube/presentation/main/parts/status_widget.dart';
 import 'package:doncube/presentation/main/parts/timeline_state.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:doncube/presentation/main/parts/value_listenable_listener.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:provider/provider.dart';
@@ -13,10 +13,17 @@ class TimelineView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return StateNotifierProvider<TimelineController, TimelineState>(
-      create: (context) => TimelineController(
-        mastodonService: MastodonService.instance(session),
-      ),
+    return MultiProvider(
+      providers: [
+        StateNotifierProvider<TimelineController, TimelineState>(
+          create: (context) => TimelineController(
+            mastodonService: MastodonService.instance(session),
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => PeriodicNotifier(const Duration(seconds: 10)),
+        ),
+      ],
       child: const _TimelineView(),
     );
   }
@@ -27,20 +34,21 @@ class _TimelineView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => PeriodicNotifier(const Duration(seconds: 10)),
+    final timelineController = context.watch<TimelineController>();
+    return ValueListenableListener<String>(
+      valueListenable: timelineController.errorNotifier,
+      onChange: (message) => _showError(context, message),
       child: RefreshIndicator(
-        onRefresh: context.watch<TimelineController>().handlePullToRefresh,
+        onRefresh: timelineController.handlePullToRefresh,
         child: Scrollbar(
           controller: PrimaryScrollController.of(context),
           child: NotificationListener<ScrollNotification>(
-            onNotification:
-                context.watch<TimelineController>().handleScrollNotification,
+            onNotification: timelineController.handleScrollNotification,
             child: ListView.separated(
               itemBuilder: (context, index) => _TimelineViewListItem(index),
               itemCount:
                   context.select<TimelineState, int>((s) => s.timeline.length),
-              separatorBuilder: _separator,
+              separatorBuilder: _buildSeparator,
             ),
           ),
         ),
@@ -48,13 +56,24 @@ class _TimelineView extends StatelessWidget {
     );
   }
 
-  Widget _separator(BuildContext context, int index) {
+  Widget _buildSeparator(BuildContext context, int index) {
     return const Divider(
       height: 0,
       indent: 68,
       endIndent: 12,
       color: Colors.grey,
     );
+  }
+
+  void _showError(BuildContext context, String message) {
+    if (message.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        Scaffold.of(context).showSnackBar(SnackBar(
+          backgroundColor: Colors.red,
+          content: Text(message),
+        ));
+      });
+    }
   }
 }
 
@@ -64,8 +83,8 @@ class _TimelineViewListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final element = context
-        .select<TimelineState, TimelineElement>((n) => n.timeline[index]);
+    final element = context.select<TimelineState, TimelineElement>(
+        (n) => index < n.timeline.length ? n.timeline[index] : null);
     switch (element.runtimeType) {
       case StatusElement:
         return StatusWidget(status: (element as StatusElement).status);
@@ -78,7 +97,7 @@ class _TimelineViewListItem extends StatelessWidget {
                   .handleTapGap(element as GapElement);
             });
       default:
-        return Container();
+        return const SizedBox();
     }
   }
 }
@@ -96,11 +115,11 @@ class _TimelineGap extends StatelessWidget {
     return Container(
       height: 60,
       alignment: Alignment.center,
-      child: isLoading ? _buildLoadingViewContent() : _buildGapViewContent(),
+      child: isLoading ? _buildLoadingChild() : _buildGapChild(),
     );
   }
 
-  Widget _buildGapViewContent() {
+  Widget _buildGapChild() {
     return Material(
       color: Colors.grey[300],
       child: InkWell(
@@ -115,9 +134,8 @@ class _TimelineGap extends StatelessWidget {
     );
   }
 
-  Widget _buildLoadingViewContent() {
+  Widget _buildLoadingChild() {
     return Container(
-      color: Colors.grey[300],
       height: 60,
       alignment: Alignment.center,
       child: const SizedBox(

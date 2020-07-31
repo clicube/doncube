@@ -93,21 +93,9 @@ class _$_TimelineState with DiagnosticableTreeMixin implements _TimelineState {
   @override
   final List<TimelineElement> timeline;
 
-  bool _didisLoadingBottom = false;
-  bool _isLoadingBottom;
-
-  @override
-  bool get isLoadingBottom {
-    if (_didisLoadingBottom == false) {
-      _didisLoadingBottom = true;
-      _isLoadingBottom = timeline.last is GapElement;
-    }
-    return _isLoadingBottom;
-  }
-
   @override
   String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
-    return 'TimelineState(timeline: $timeline, isLoadingBottom: $isLoadingBottom)';
+    return 'TimelineState(timeline: $timeline)';
   }
 
   @override
@@ -115,8 +103,7 @@ class _$_TimelineState with DiagnosticableTreeMixin implements _TimelineState {
     super.debugFillProperties(properties);
     properties
       ..add(DiagnosticsProperty('type', 'TimelineState'))
-      ..add(DiagnosticsProperty('timeline', timeline))
-      ..add(DiagnosticsProperty('isLoadingBottom', isLoadingBottom));
+      ..add(DiagnosticsProperty('timeline', timeline));
   }
 
   @override

@@ -1,4 +1,5 @@
 import 'package:doncube/domain/mastodon/mastodon_service.dart';
+import 'package:doncube/presentation/main/parts/verbose_value_notifier.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -12,9 +13,6 @@ abstract class TimelineState with _$TimelineState {
   factory TimelineState({
     @required List<TimelineElement> timeline,
   }) = _TimelineState;
-
-  @late
-  bool get isLoadingBottom => timeline.last is GapElement;
 }
 
 class TimelineController extends StateNotifier<TimelineState> {
@@ -24,6 +22,8 @@ class TimelineController extends StateNotifier<TimelineState> {
         super(TimelineState(timeline: [])) {
     _initialLoad();
   }
+  ValueListenable<String> get errorNotifier => _errorNotifier;
+  final ValueNotifier<String> _errorNotifier = VerboseValueNotifier('');
   final MastodonService _mastodonService;
   List<TimelineFragment> _fragmentList = [];
   List<TimelineElement> _elementList = [];
@@ -34,7 +34,9 @@ class TimelineController extends StateNotifier<TimelineState> {
   bool _canStartLoadOlder = true;
 
   Future<void> handlePullToRefresh() async {
-    final timeline = await _mastodonService.loadLatestHomeTimeline();
+    final timeline = await _mastodonService
+        .loadLatestHomeTimeline()
+        .catchError(_handleError);
     _updateTimeline(timeline);
   }
 
@@ -59,7 +61,6 @@ class TimelineController extends StateNotifier<TimelineState> {
             scrollNotification as ScrollUpdateNotification;
         final distance = scrollUpdateNotification.metrics.maxScrollExtent -
             scrollUpdateNotification.metrics.pixels;
-        print(distance);
         if (distance < 20 &&
             _isLoadingOlder == false &&
             _canStartLoadOlder == true &&
@@ -72,45 +73,64 @@ class TimelineController extends StateNotifier<TimelineState> {
   }
 
   Future<void> handleTapGap(GapElement gapElement) async {
-    final timeline = state.timeline.toList();
-    final targetIndex = timeline.indexOf(gapElement);
+    final currentTimeline = state.timeline;
+    final loadingTimeline = state.timeline.toList();
+    final targetIndex = loadingTimeline.indexOf(gapElement);
     if (targetIndex < 0) {
       return;
     }
-    timeline[targetIndex] = GapElement(
+    loadingTimeline[targetIndex] = GapElement(
       isLoading: true,
       olderFragment: gapElement.olderFragment,
       newerFragment: gapElement.newerFragment,
     );
-    state = state.copyWith(timeline: timeline);
-    await _mastodonService.loadOlderHomeTimeline(gapElement.newerFragment);
+    state = state.copyWith(timeline: loadingTimeline);
+    final timeline = await _mastodonService
+        .loadOlderHomeTimeline(gapElement.newerFragment)
+        .catchError((dynamic error) {
+      state = state.copyWith(timeline: currentTimeline);
+      _handleError(error);
+    });
+    _updateTimeline(timeline);
   }
 
   Future<void> _initialLoad() async {
+    final currentTimeline = state.timeline;
     state = state.copyWith(timeline: [
       const GapElement(isLoading: true),
       ...state.timeline,
     ]);
-    final timeline = await _mastodonService.loadHomeTimeline();
+    final timeline =
+        await _mastodonService.loadHomeTimeline().catchError((dynamic error) {
+      state = state.copyWith(timeline: currentTimeline);
+      _handleError(error);
+    });
     _updateTimeline(timeline);
   }
 
   Future<void> _onScrolledToBottom() async {
     _isLoadingOlder = true;
     _canStartLoadOlder = false;
+    final currentTimeline = state.timeline;
     state = state.copyWith(timeline: [
       ...state.timeline,
       const GapElement(isLoading: true),
     ]);
     final timeline = await _mastodonService
         .loadOlderHomeTimeline(_fragmentList.last)
-        .whenComplete(() {
+        .catchError((dynamic error) {
+      state = state.copyWith(timeline: currentTimeline);
+      _handleError(error);
+    }).whenComplete(() {
       _isLoadingOlder = false;
     });
     _updateTimeline(timeline);
   }
 
   void _updateTimeline(List<TimelineFragment> data) {
+    if (data == null) {
+      return;
+    }
     _fragmentList = data;
     _elementList = _fragmentListToElementList(data);
     if (_isScrolling) {
@@ -123,6 +143,9 @@ class TimelineController extends StateNotifier<TimelineState> {
   List<TimelineElement> _fragmentListToElementList(
       List<TimelineFragment> list) {
     final result = <TimelineElement>[];
+    if (list == null) {
+      return result;
+    }
     TimelineFragment prevFragment;
     for (final fragment in list) {
       if (prevFragment != null) {
@@ -137,6 +160,14 @@ class TimelineController extends StateNotifier<TimelineState> {
       prevFragment = fragment;
     }
     return result;
+  }
+
+  void _handleError(dynamic error) {
+    if (error is Exception) {
+      _errorNotifier.value = 'Failed to load timeline';
+      return;
+    }
+    throw error;
   }
 }
 
