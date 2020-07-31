@@ -101,22 +101,23 @@ class _TimelineGap extends StatelessWidget {
   }
 
   Widget _buildGapViewContent() {
-    return InkWell(
-      onTap: onTapLoad,
-      child: const SizedBox.expand(
-        child: Center(
-            child: Text(
-          'Load',
-          style: TextStyle(
-            color: Colors.grey,
-          ),
-        )),
+    return Material(
+      color: Colors.grey[300],
+      child: InkWell(
+        onTap: onTapLoad,
+        child: const Center(
+          child: Text('Load',
+              style: TextStyle(
+                color: Colors.grey,
+              )),
+        ),
       ),
     );
   }
 
   Widget _buildLoadingViewContent() {
     return Container(
+      color: Colors.grey[300],
       height: 60,
       alignment: Alignment.center,
       child: const SizedBox(
