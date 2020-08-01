@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
 
 class VerboseValueNotifier<T> extends ChangeNotifier
     implements ValueNotifier<T>, ValueListenable<T> {

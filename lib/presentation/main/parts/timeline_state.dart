@@ -73,58 +73,48 @@ class TimelineController extends StateNotifier<TimelineState> {
   }
 
   Future<void> handleTapGap(GapElement gapElement) async {
-    final currentTimeline = state.timeline;
-    final loadingTimeline = state.timeline.toList();
-    final targetIndex = loadingTimeline.indexOf(gapElement);
-    if (targetIndex < 0) {
-      return;
-    }
-    loadingTimeline[targetIndex] = GapElement(
-      isLoading: true,
-      olderFragment: gapElement.olderFragment,
-      newerFragment: gapElement.newerFragment,
-    );
-    state = state.copyWith(timeline: loadingTimeline);
-    final timeline = await _mastodonService
-        .loadOlderHomeTimeline(gapElement.newerFragment)
-        .catchError((dynamic error) {
-      state = state.copyWith(timeline: currentTimeline);
-      _handleError(error);
-    });
-    _updateTimeline(timeline);
+    await _rollbackOnError(() async {
+      final loadingTimeline = state.timeline.toList();
+      final targetIndex = loadingTimeline.indexOf(gapElement);
+      if (targetIndex < 0) {
+        return;
+      }
+      loadingTimeline[targetIndex] = GapElement(
+        isLoading: true,
+        olderFragment: gapElement.olderFragment,
+        newerFragment: gapElement.newerFragment,
+      );
+      state = state.copyWith(timeline: loadingTimeline);
+      final timeline = await _mastodonService
+          .loadOlderHomeTimeline(gapElement.newerFragment);
+      _updateTimeline(timeline);
+    }, _handleError);
   }
 
   Future<void> _initialLoad() async {
-    final currentTimeline = state.timeline;
-    state = state.copyWith(timeline: [
-      const GapElement(isLoading: true),
-      ...state.timeline,
-    ]);
-    final timeline =
-        await _mastodonService.loadHomeTimeline().catchError((dynamic error) {
-      state = state.copyWith(timeline: currentTimeline);
-      _handleError(error);
-    });
-    _updateTimeline(timeline);
+    await _rollbackOnError(() async {
+      state = state.copyWith(timeline: [
+        const GapElement(isLoading: true),
+        ...state.timeline,
+      ]);
+      final timeline = await _mastodonService.loadHomeTimeline();
+      _updateTimeline(timeline);
+    }, _handleError);
   }
 
   Future<void> _onScrolledToBottom() async {
     _isLoadingOlder = true;
     _canStartLoadOlder = false;
-    final currentTimeline = state.timeline;
-    state = state.copyWith(timeline: [
-      ...state.timeline,
-      const GapElement(isLoading: true),
-    ]);
-    final timeline = await _mastodonService
-        .loadOlderHomeTimeline(_fragmentList.last)
-        .catchError((dynamic error) {
-      state = state.copyWith(timeline: currentTimeline);
-      _handleError(error);
-    }).whenComplete(() {
-      _isLoadingOlder = false;
-    });
-    _updateTimeline(timeline);
+    await _rollbackOnError(() async {
+      state = state.copyWith(timeline: [
+        ...state.timeline,
+        const GapElement(isLoading: true),
+      ]);
+      final timeline =
+          await _mastodonService.loadOlderHomeTimeline(_fragmentList.last);
+      _updateTimeline(timeline);
+    }, _handleError);
+    _isLoadingOlder = false;
   }
 
   void _updateTimeline(List<TimelineFragment> data) {
@@ -168,6 +158,17 @@ class TimelineController extends StateNotifier<TimelineState> {
       return;
     }
     throw error;
+  }
+
+  Future<void> _rollbackOnError(Future<void> Function() callback,
+      void Function(Exception exception) onError) async {
+    final previousTimeline = state.timeline;
+    try {
+      await callback?.call();
+    } on Exception catch (e) {
+      state = state.copyWith(timeline: previousTimeline);
+      onError?.call(e);
+    }
   }
 }
 
