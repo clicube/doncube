@@ -1,11 +1,8 @@
 import 'package:doncube/data/session/session.dart';
 import 'package:doncube/domain/session/session_service.dart';
-import 'package:doncube/domain/timeline/timeline_service.dart';
-import 'package:doncube/presentation/main/parts/timeline_status.dart';
+import 'package:doncube/presentation/main/parts/timeline_view.dart';
 import 'package:doncube/presentation/welcome/welcome_page.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
-import 'package:mastodon_dart/mastodon_dart.dart';
 import 'package:provider/provider.dart';
 
 class MainPage extends StatelessWidget {
@@ -17,16 +14,20 @@ class MainPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Main Page'),
       ),
-      body: const _Timeline(),
-      drawer: Drawer(
-        child: ListView(
-          children: [
-            ListTile(
-              title: const Text('Sign out'),
-              onTap: () => _signOut(context),
-            ),
-          ],
-        ),
+      body: TimelineView(session: context.watch<Session>()),
+      drawer: _buildDrawer(context),
+    );
+  }
+
+  Widget _buildDrawer(BuildContext context) {
+    return Drawer(
+      child: ListView(
+        children: [
+          ListTile(
+            title: const Text('Sign out'),
+            onTap: () => _signOut(context),
+          ),
+        ],
       ),
     );
   }
@@ -38,45 +39,5 @@ class MainPage extends StatelessWidget {
         MaterialPageRoute<Object>(builder: (context) => const WelcomePage());
     await Navigator.of(context, rootNavigator: true)
         .pushAndRemoveUntil(nextRoute, (route) => false);
-  }
-}
-
-class _Timeline extends StatelessWidget {
-  const _Timeline({Key key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final session = context.watch<Session>();
-    final timelineService = context
-        .watch<TimelineServiceManager>()
-        .getServiceFor(session)
-          ..update();
-
-    return ChangeNotifierProvider(
-      create: (_) => PeriodicNotifier(const Duration(seconds: 10)),
-      child: StreamBuilder<List<Status>>(
-          stream: timelineService.timeline,
-          builder: (context, snapshot) {
-            if (snapshot.hasError) {
-              SchedulerBinding.instance.addPostFrameCallback((_) {
-                Scaffold.of(context).showSnackBar(
-                  const SnackBar(content: Text('Timeline load failed')),
-                );
-              });
-              return Container();
-            }
-            if (snapshot.hasData) {
-              return ListView(
-                children: snapshot.data
-                    .map((e) => StatusWidget(
-                          status: e,
-                        ))
-                    .toList(),
-              );
-            } else {
-              return const Center(child: CircularProgressIndicator());
-            }
-          }),
-    );
   }
 }

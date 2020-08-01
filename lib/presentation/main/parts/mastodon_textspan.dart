@@ -1,4 +1,5 @@
 import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:html/parser.dart' as html_parser;
 import 'package:html/dom.dart' as html_dom;
@@ -87,16 +88,12 @@ class MastodonTextSpan extends TextSpan {
     TextStyle style;
     var childRecognizer = recognizer;
     if (element.localName == 'a') {
-      style = const TextStyle(color: Color.fromARGB(255, 10, 10, 255));
+      style = const TextStyle(color: Colors.blue);
       childRecognizer = TapGestureRecognizer()
         ..onTap = () {
           final url = element.attributes['href'];
           print('link tapped: $url');
-          if (onTapLink != null) {
-            onTapLink(url);
-          } else {
-            print('but onTapLink is null');
-          }
+          onTapLink?.call(url);
         };
     }
     final childrenTextSpans = element.nodes

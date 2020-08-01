@@ -1,6 +1,6 @@
 import 'package:doncube/data/session/session.dart';
 import 'package:doncube/domain/session/session_service.dart';
-import 'package:doncube/presentation/main/session_context.dart';
+import 'package:doncube/presentation/main/session_scope.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -79,7 +79,7 @@ class SignInPage extends StatelessWidget {
     }
 
     final nextRoute = MaterialPageRoute<Object>(
-        builder: (context) => SessionContext.mainPage(session));
+        builder: (context) => SessionScope.mainPage(session));
     await Navigator.of(context, rootNavigator: true).pushAndRemoveUntil<Object>(
       nextRoute,
       (route) => false,

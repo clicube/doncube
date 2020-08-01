@@ -1,8 +1,7 @@
 import 'package:doncube/data/oauth_app/oauth_app_store.dart';
 import 'package:doncube/data/session/session_store.dart';
 import 'package:doncube/domain/session/session_service.dart';
-import 'package:doncube/domain/timeline/timeline_service.dart';
-import 'package:doncube/presentation/main/session_context.dart';
+import 'package:doncube/presentation/main/session_scope.dart';
 import 'package:doncube/presentation/welcome/welcome_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -10,6 +9,8 @@ import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timeago/timeago.dart' as timeago;
+
+const appName = 'Doncube';
 
 class DoncubeApp extends StatelessWidget {
   DoncubeApp({Key key}) : super(key: key) {
@@ -38,7 +39,7 @@ class _SplashApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
-      title: 'Doncube',
+      title: appName,
       home: Scaffold(),
     );
   }
@@ -55,7 +56,7 @@ class _MainApp extends StatelessWidget {
       builder: (context, child) {
         final sessionService = context.watch<SessionService>();
         return MaterialApp(
-          title: 'Doncube',
+          title: appName,
           theme: _buildTheme(context),
           localizationsDelegates: const [
             GlobalMaterialLocalizations.delegate,
@@ -67,7 +68,7 @@ class _MainApp extends StatelessWidget {
             Locale('ja', ''),
           ],
           home: sessionService.isStoredAnySession()
-              ? SessionContext.mainPage(sessionService.getSessions().first)
+              ? SessionScope.mainPage(sessionService.getSessions().first)
               : const WelcomePage(),
         );
       },
@@ -92,9 +93,6 @@ class _MainApp extends StatelessWidget {
           return sessionService;
         },
       ),
-      Provider(
-        create: (context) => TimelineServiceManager(),
-      )
     ];
   }
 }
