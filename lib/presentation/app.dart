@@ -58,6 +58,7 @@ class _MainApp extends StatelessWidget {
         return MaterialApp(
           title: appName,
           theme: _buildTheme(context),
+          darkTheme: _buildDarkTheme(context),
           localizationsDelegates: const [
             GlobalMaterialLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,
@@ -76,7 +77,14 @@ class _MainApp extends StatelessWidget {
   }
 
   ThemeData _buildTheme(BuildContext context) {
-    final base = ThemeData.light();
+    final base =
+        ThemeData(primarySwatch: Colors.blueGrey, brightness: Brightness.light);
+    return base;
+  }
+
+  ThemeData _buildDarkTheme(BuildContext context) {
+    final base =
+        ThemeData(brightness: Brightness.dark, accentColor: Colors.blueGrey);
     return base;
   }
 
