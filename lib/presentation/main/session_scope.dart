@@ -4,20 +4,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
 
-class SessionContext extends StatelessWidget {
-  const SessionContext({
+class SessionScope extends StatelessWidget {
+  const SessionScope({
     @required this.session,
     @required this.child,
     Key key,
   }) : super(key: key);
-  const SessionContext.mainPage(this.session) : child = const MainPage();
+  const SessionScope.mainPage(this.session) : child = const MainPage();
   final Session session;
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    return Provider<Session>(
-      create: (context) => session,
+    return Provider.value(
+      value: session,
       builder: (context, child) => _createNavigator(this.child),
     );
   }

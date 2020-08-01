@@ -1,10 +1,9 @@
 import 'dart:async';
 
 import 'package:doncube/data/session/session.dart';
-import 'package:doncube/domain/base/session_wired_service.dart';
 import 'package:mastodon_dart/mastodon_dart.dart';
 
-class MastodonService implements SessionWiredService {
+class MastodonService {
   factory MastodonService.instance(Session session) =>
       _getOrCreateInstance(session);
   MastodonService._(Session session) : _session = session;
@@ -79,8 +78,8 @@ class MastodonService implements SessionWiredService {
       return null;
     }
     final subList = b.list.sublist(foundIndex + 1);
-    final marged = a.list.toList()..addAll(subList);
-    return TimelineFragment(marged);
+    final merged = a.list.toList()..addAll(subList);
+    return TimelineFragment(merged);
   }
 }
 
