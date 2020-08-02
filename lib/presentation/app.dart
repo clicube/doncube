@@ -1,10 +1,14 @@
+import 'package:doncube/data/app_setting/app_setting_store.dart';
 import 'package:doncube/data/oauth_app/oauth_app_store.dart';
 import 'package:doncube/data/session/session_store.dart';
+import 'package:doncube/domain/app_setting/app_setting_service.dart';
 import 'package:doncube/domain/session/session_service.dart';
+import 'package:doncube/presentation/app_state.dart';
 import 'package:doncube/presentation/main/session_scope.dart';
 import 'package:doncube/presentation/welcome/welcome_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -40,6 +44,7 @@ class _SplashApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return const MaterialApp(
       title: appName,
+      themeMode: ThemeMode.system,
       home: Scaffold(),
     );
   }
@@ -58,6 +63,8 @@ class _MainApp extends StatelessWidget {
         return MaterialApp(
           title: appName,
           theme: _buildTheme(context),
+          themeMode: context.select<AppState, ThemeMode>((s) => s.themeMode),
+          darkTheme: _buildDarkTheme(context),
           localizationsDelegates: const [
             GlobalMaterialLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,
@@ -76,7 +83,24 @@ class _MainApp extends StatelessWidget {
   }
 
   ThemeData _buildTheme(BuildContext context) {
-    final base = ThemeData.light();
+    final base = ThemeData(
+      brightness: Brightness.light,
+      primaryColorBrightness: Brightness.light,
+      primarySwatch: Colors.blueGrey,
+      appBarTheme: const AppBarTheme(
+        color: Colors.white,
+        brightness: Brightness.light,
+      ),
+    );
+    return base;
+  }
+
+  ThemeData _buildDarkTheme(BuildContext context) {
+    final base = ThemeData(
+      brightness: Brightness.dark,
+      primarySwatch: Colors.blue,
+      accentColor: Colors.blue,
+    );
     return base;
   }
 
@@ -93,6 +117,17 @@ class _MainApp extends StatelessWidget {
           return sessionService;
         },
       ),
+      Provider(
+        create: (context) {
+          final appSettingStore = AppSettingStore(sharedPrefs);
+          final appSettingService =
+              AppSettingService(appSettingStore: appSettingStore);
+          return appSettingService;
+        },
+      ),
+      StateNotifierProvider<AppStateController, AppState>(create: (context) {
+        return AppStateController();
+      })
     ];
   }
 }
