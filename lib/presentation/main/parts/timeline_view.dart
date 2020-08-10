@@ -1,9 +1,12 @@
 import 'package:doncube/data/session/session.dart';
 import 'package:doncube/domain/mastodon/mastodon_service.dart';
+import 'package:doncube/presentation/main/parts/platform_refresh_indicator.dart';
 import 'package:doncube/presentation/main/parts/status_widget.dart';
 import 'package:doncube/presentation/main/parts/timeline_state.dart';
 import 'package:doncube/presentation/main/parts/value_listenable_listener.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:provider/provider.dart';
 
@@ -38,25 +41,30 @@ class _TimelineView extends StatelessWidget {
     return ValueListenableListener<String>(
       valueListenable: timelineController.errorNotifier,
       onChange: (message) => _showError(context, message),
-      child: RefreshIndicator(
-        onRefresh: timelineController.handlePullToRefresh,
-        child: Scrollbar(
-          controller: PrimaryScrollController.of(context),
-          child: NotificationListener<ScrollNotification>(
-            onNotification: timelineController.handleScrollNotification,
-            child: ListView.separated(
-              itemBuilder: (context, index) => _TimelineViewListItem(index),
-              itemCount:
-                  context.select<TimelineState, int>((s) => s.timeline.length),
-              separatorBuilder: _buildSeparator,
-            ),
+      child: Scrollbar(
+        controller: PrimaryScrollController.of(context),
+        child: NotificationListener<ScrollNotification>(
+          onNotification: timelineController.handleScrollNotification,
+          child: PlatformRefreshIndicator(
+            onRefresh: timelineController.handlePullToRefresh,
+            childDelegate: SliverChildBuilderDelegate((context, index) {
+              final isOdd = index % 2 == 1;
+              final itemIndex = index ~/ 2;
+              if (isOdd) {
+                return _buildSeparator(context); //_buildSeparator(context);
+              } else {
+                return _TimelineViewListItem(itemIndex);
+              }
+            },
+                childCount: context.select<TimelineState, int>(
+                    (s) => s.timeline.length * 2 - 1)),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildSeparator(BuildContext context, int index) {
+  Widget _buildSeparator(BuildContext context) {
     return const Divider(
       height: 0,
       indent: 68,
@@ -87,7 +95,21 @@ class _TimelineViewListItem extends StatelessWidget {
         (n) => index < n.timeline.length ? n.timeline[index] : null);
     switch (element.runtimeType) {
       case StatusElement:
-        return StatusWidget(status: (element as StatusElement).status);
+        return StatusWidget(
+          status: (element as StatusElement).status,
+          onTap: () {
+            Navigator.of(context).push<Object>(platformPageRoute(
+                context: context,
+                builder: (context) {
+                  return PlatformScaffold(
+                    appBar: PlatformAppBar(
+                      title: const Text('Status detail'),
+                    ),
+                    body: Text((element as StatusElement).status.content),
+                  );
+                }));
+          },
+        );
       case GapElement:
         return _TimelineGap(
             isLoading: (element as GapElement).isLoading,
@@ -138,10 +160,15 @@ class _TimelineGap extends StatelessWidget {
     return Container(
       height: 60,
       alignment: Alignment.center,
-      child: const SizedBox(
+      child: SizedBox(
         height: 20,
         width: 20,
-        child: CircularProgressIndicator(strokeWidth: 2),
+        child: PlatformCircularProgressIndicator(
+          cupertino: (context, platform) =>
+              CupertinoProgressIndicatorData(radius: 15),
+          material: (context, platform) =>
+              MaterialProgressIndicatorData(strokeWidth: 2),
+        ),
       ),
     );
   }

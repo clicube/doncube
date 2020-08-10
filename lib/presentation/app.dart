@@ -7,7 +7,9 @@ import 'package:doncube/presentation/app_state.dart';
 import 'package:doncube/presentation/main/session_scope.dart';
 import 'package:doncube/presentation/welcome/welcome_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/src/foundation/diagnostics.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:flutter_state_notifier/flutter_state_notifier.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
@@ -60,23 +62,29 @@ class _MainApp extends StatelessWidget {
       providers: _buildProviders(sharedPrefs),
       builder: (context, child) {
         final sessionService = context.watch<SessionService>();
-        return MaterialApp(
-          title: appName,
-          theme: _buildTheme(context),
-          themeMode: context.select<AppState, ThemeMode>((s) => s.themeMode),
-          darkTheme: _buildDarkTheme(context),
-          localizationsDelegates: const [
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          supportedLocales: const [
-            Locale('en', ''),
-            Locale('ja', ''),
-          ],
-          home: sessionService.isStoredAnySession()
-              ? SessionScope.mainPage(sessionService.getSessions().first)
-              : const WelcomePage(),
+        return PlatformProvider(
+          initialPlatform: TargetPlatform.iOS,
+          builder: (context) => PlatformApp(
+            title: appName,
+            material: (context, target) => MaterialAppData(
+              theme: _buildTheme(context),
+              themeMode:
+                  context.select<AppState, ThemeMode>((s) => s.themeMode),
+              darkTheme: _buildDarkTheme(context),
+            ),
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [
+              Locale('en', ''),
+              Locale('ja', ''),
+            ],
+            home: sessionService.isStoredAnySession()
+                ? SessionScope.mainPage(sessionService.getSessions().first)
+                : const WelcomePage(),
+          ),
         );
       },
     );

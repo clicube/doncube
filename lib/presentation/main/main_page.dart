@@ -6,6 +6,7 @@ import 'package:doncube/presentation/app_state.dart';
 import 'package:doncube/presentation/main/parts/timeline_view.dart';
 import 'package:doncube/presentation/welcome/welcome_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:provider/provider.dart';
 
 class MainPage extends StatelessWidget {
@@ -13,12 +14,24 @@ class MainPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Main Page'),
+    return Provider(
+      create: (context) => _PlatformTabControllerWrapper(),
+      builder: (context, child) => PlatformTabScaffold(
+        appBarBuilder: (context, index) => PlatformAppBar(
+          title: Text('Main Page($index)'),
+        ),
+        tabController:
+            context.watch<_PlatformTabControllerWrapper>().controller,
+        bodyBuilder: (context, index) =>
+            SafeArea(child: TimelineView(session: context.watch<Session>())),
+        items: [
+          BottomNavigationBarItem(icon: Icon(Icons.home), title: Text('Home')),
+          BottomNavigationBarItem(icon: Icon(Icons.build), title: Text('AAA')),
+        ],
+        material: (context, target) => MaterialTabScaffoldData(
+          drawer: _buildDrawer(context),
+        ),
       ),
-      body: TimelineView(session: context.watch<Session>()),
-      drawer: _buildDrawer(context),
     );
   }
 
@@ -105,4 +118,9 @@ class _ThemeModeToggleButtons extends StatelessWidget {
       textStyle: Theme.of(context).textTheme.overline,
     );
   }
+}
+
+class _PlatformTabControllerWrapper {
+  _PlatformTabControllerWrapper();
+  final PlatformTabController controller = PlatformTabController();
 }

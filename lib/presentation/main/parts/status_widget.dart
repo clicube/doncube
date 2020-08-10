@@ -8,33 +8,39 @@ import 'package:mastodon_dart/mastodon_dart.dart';
 import 'package:provider/provider.dart';
 
 class StatusWidget extends StatelessWidget {
-  const StatusWidget({this.status, Key key}) : super(key: key);
+  const StatusWidget({@required this.status, this.onTap, Key key})
+      : super(key: key);
   final Status status;
+  final void Function() onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 8, right: 12, left: 12, bottom: 0),
-      child: Column(
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _AvatarArea(status: status),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _StatusHeader(status: status),
-                    _StatusContent(status: status),
-                  ],
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.translucent,
+      child: Padding(
+        padding: const EdgeInsets.only(top: 8, right: 12, left: 12, bottom: 0),
+        child: Column(
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _AvatarArea(status: status),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _StatusHeader(status: status),
+                      _StatusContent(status: status),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-        ],
+              ],
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
       ),
     );
   }
