@@ -6,6 +6,7 @@ import 'package:doncube/domain/session/session_service.dart';
 import 'package:doncube/presentation/app_state.dart';
 import 'package:doncube/presentation/main/session_scope.dart';
 import 'package:doncube/presentation/welcome/welcome_page.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/foundation/diagnostics.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -63,15 +64,21 @@ class _MainApp extends StatelessWidget {
       builder: (context, child) {
         final sessionService = context.watch<SessionService>();
         return PlatformProvider(
-          initialPlatform: TargetPlatform.iOS,
           builder: (context) => PlatformApp(
             title: appName,
-            material: (context, target) => MaterialAppData(
-              theme: _buildTheme(context),
+            material: (context, platform) => MaterialAppData(
+              theme: _buildMaterialTheme(context),
+              darkTheme: _buildMaterialDarkTheme(context),
               themeMode:
                   context.select<AppState, ThemeMode>((s) => s.themeMode),
-              darkTheme: _buildDarkTheme(context),
             ),
+            cupertino: (context, platform) {
+              return CupertinoAppData(
+                theme: _buildCupertinoThemeData(context,
+                    themeMode: context
+                        .select<AppState, ThemeMode>((s) => s.themeMode)),
+              );
+            },
             localizationsDelegates: const [
               GlobalMaterialLocalizations.delegate,
               GlobalWidgetsLocalizations.delegate,
@@ -90,7 +97,7 @@ class _MainApp extends StatelessWidget {
     );
   }
 
-  ThemeData _buildTheme(BuildContext context) {
+  ThemeData _buildMaterialTheme(BuildContext context) {
     final base = ThemeData(
       brightness: Brightness.light,
       primaryColorBrightness: Brightness.light,
@@ -103,12 +110,31 @@ class _MainApp extends StatelessWidget {
     return base;
   }
 
-  ThemeData _buildDarkTheme(BuildContext context) {
+  ThemeData _buildMaterialDarkTheme(BuildContext context) {
     final base = ThemeData(
       brightness: Brightness.dark,
       primarySwatch: Colors.blue,
       accentColor: Colors.blue,
     );
+    return base;
+  }
+
+  CupertinoThemeData _buildCupertinoThemeData(
+    BuildContext context, {
+    ThemeMode themeMode,
+  }) {
+    Brightness brightness;
+    switch (themeMode) {
+      case ThemeMode.light:
+        brightness = Brightness.light;
+        break;
+      case ThemeMode.dark:
+        brightness = Brightness.dark;
+        break;
+      default:
+        brightness = null;
+    }
+    final base = CupertinoThemeData(brightness: brightness);
     return base;
   }
 

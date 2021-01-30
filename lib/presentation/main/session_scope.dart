@@ -10,7 +10,7 @@ class SessionScope extends StatelessWidget {
     @required this.child,
     Key key,
   }) : super(key: key);
-  const SessionScope.mainPage(this.session) : child = const MainPage();
+  SessionScope.mainPage(this.session) : child = MainPage();
   final Session session;
   final Widget child;
 

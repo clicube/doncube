@@ -1,6 +1,9 @@
 import 'dart:async';
+import 'dart:io' show Platform;
+import 'dart:ui';
 
 import 'package:doncube/presentation/main/parts/mastodon_textspan.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_web_browser/flutter_web_browser.dart';
 import 'package:timeago/timeago.dart' as timeago;
@@ -77,14 +80,13 @@ class _AvatarArea extends StatelessWidget {
   }
 }
 
-class _StatusHeader extends StatelessWidget {
+class _StatusHeader extends StatelessWidget with PlatformTextStyleMixin {
   const _StatusHeader({@required this.status, Key key}) : super(key: key);
   final Status status;
 
   @override
   Widget build(BuildContext context) {
-    final baseTextStyle =
-        Theme.of(context).textTheme.bodyText1.copyWith(color: Colors.grey);
+    final baseTextStyle = platformTextStyleOf(context);
     final platformTextScaleFactor = MediaQuery.of(context).textScaleFactor;
     return Row(
       children: [
@@ -142,24 +144,20 @@ class _StatusTime extends StatelessWidget {
   }
 }
 
-class _StatusContent extends StatelessWidget {
+class _StatusContent extends StatelessWidget with PlatformTextStyleMixin {
   const _StatusContent({@required this.status, Key key}) : super(key: key);
   final Status status;
 
   @override
   Widget build(BuildContext context) {
+    final baseTextStyle = platformTextStyleOf(context);
     final platformTextScaleFactor = MediaQuery.of(context).textScaleFactor;
     return RichText(
       text: MastodonTextSpan(
         text: status.content,
         emojis: status.emojis,
-        emojiSize: Theme.of(context).textTheme.bodyText1.fontSize *
-            1.2 *
-            platformTextScaleFactor,
-        style: Theme.of(context)
-            .textTheme
-            .bodyText1
-            .apply(fontSizeFactor: platformTextScaleFactor),
+        emojiSize: baseTextStyle.fontSize * platformTextScaleFactor * 1.2,
+        style: baseTextStyle.apply(fontSizeFactor: platformTextScaleFactor),
         onTapLink: (url) {
           FlutterWebBrowser.openWebPage(url: url);
         },
@@ -180,5 +178,18 @@ class PeriodicNotifier extends ChangeNotifier {
   void dispose() {
     _timer.cancel();
     super.dispose();
+  }
+}
+
+mixin PlatformTextStyleMixin {
+  TextStyle platformTextStyleOf(BuildContext context) {
+    if (Platform.isIOS) {
+      return CupertinoTheme.of(context)
+          .textTheme
+          .textStyle
+          .apply(fontSizeFactor: 0.8);
+    } else {
+      return Theme.of(context).textTheme.bodyText1;
+    }
   }
 }
